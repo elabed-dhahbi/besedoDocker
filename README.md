@@ -110,7 +110,7 @@ Why This Fix Works
 ✅ Ensured the main entry file is app.js, which aligns with the Docker CMD.
 
 Redis (Database)
-````
+```
 File: Dockerfile.redis
 
 FROM redis:latest  # Use the latest Redis image
