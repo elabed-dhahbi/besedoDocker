@@ -109,7 +109,22 @@ Why This Fix Works
 
 ✅ Ensured the main entry file is app.js, which aligns with the Docker CMD.
 
+Redis (Database)
+````
+File: Dockerfile.redis
 
+FROM redis:latest  # Use the latest Redis image
+CMD ["redis-server", "--port", "6399"]  # Start Redis on port 6399
+EXPOSE 6399  # Expose Redis service
+```
+
+Explanation:
+
+Uses official Redis image.
+
+Configures Redis to run on port 6399 as per requirements.
+
+Exposes port 6399.
 Building and Running the Containers
 
 Build the Images
@@ -120,6 +135,9 @@ docker build -t falcon-image -f Dockerfile.falcon .
 # Build Ariane (Frontend)
 docker build -t ariane-image -f Dockerfile.ariane .
 
+# Build Redis (Database)
+docker build -t redis-image -f Dockerfile.redis .
+
 Run the Containers
 
 # Run Falcon (Backend) container
@@ -127,6 +145,9 @@ docker run -d --name falcon-container -p 4000:4000 falcon-image
 
 # Run Ariane (Frontend) container
 docker run -d --name ariane-container -p 3000:3000 ariane-image
+
+# Run Redis (Database) container
+docker run -d --name redis-container -p 6399:6399 redis-image
 
 Verify Containers are Running
 
