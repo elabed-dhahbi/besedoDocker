@@ -166,3 +166,198 @@ Falcon (Golang) now builds properly and runs as an executable.
 Ariane (Node.js) was fixed to bind to 0.0.0.0, ensuring external access.
 
 Both applications are containerized using efficient Dockerfile best practices.
+
+
+**Kubernetes Configuration**
+
+ConfigMaps
+
+The ConfigMaps store environment variables for the services to ensure proper connectivity between components.
+
+Falcon ConfigMap
+```
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: falcon-config
+data:
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6399"
+```
+Ariane ConfigMap
+```
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ariane-config
+data:
+  API_URL: "http://falcon-service:4000"
+```
+Services
+
+These services expose the deployments to internal and external connections.
+
+Ariane Service
+```
+apiVersion: v1
+kind: Service
+metadata:
+  name: ariane-service
+spec:
+  selector:
+    app: ariane
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+```
+Falcon Service
+```
+apiVersion: v1
+kind: Service
+metadata:
+  name: falcon-service
+spec:
+  selector:
+    app: falcon
+  ports:
+    - protocol: TCP
+      port: 4000
+      targetPort: 4000
+```
+Redis Service
+
+```
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+spec:
+  selector:
+    app: redis
+  ports:
+    - protocol: TCP
+      port: 6399
+      targetPort: 6399
+```
+Deployments
+
+The deployments manage the application replicas and configuration.
+```
+Ariane Deployment
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ariane-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ariane
+  template:
+    metadata:
+      labels:
+        app: ariane
+    spec:
+      containers:
+        - name: ariane
+          image: ariane-image:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          env:
+            - name: API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ariane-config
+                  key: API_URL
+```
+Falcon Deployment
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: falcon-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: falcon
+  template:
+    metadata:
+      labels:
+        app: falcon
+    spec:
+      containers:
+        - name: falcon
+          image: falcon-image:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4000
+          env:
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: falcon-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: falcon-config
+                  key: REDIS_PORT
+```
+Persistent Storage for Redis
+```
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: longhorn
+```
+Redis Deployment
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: custom-redis:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 6399
+          volumeMounts:
+            - mountPath: /data
+              name: redis-storage
+      volumes:
+        - name: redis-storage
+          persistentVolumeClaim:
+            claimName: redis-pvc
+```
+Conclusion
+
+ConfigMaps are used to manage configuration dynamically.
+
+Ariane and Falcon deployments now load their environment variables from ConfigMaps.
+
+Redis deployment uses persistent storage.
+
+**Each component is deployed and accessible through its respective Kubernetes service.
