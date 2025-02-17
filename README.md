@@ -136,7 +136,7 @@ docker build -t falcon-image -f Dockerfile.falcon .
 docker build -t ariane-image -f Dockerfile.ariane .
 
 # Build Redis (Database)
-docker build -t redis-image -f Dockerfile.redis .
+docker build -t redis-image -f Dockerfile .
 
 Run the Containers
 
@@ -157,9 +157,7 @@ Test Access
 
 Ariane (Frontend): Open http://localhost:3000 in a browser.
 
-Falcon (Backend): Test API using:
 
-curl http://localhost:4000
 
 Conclusion
 
